@@ -45,11 +45,19 @@
           "dependencies": {
             "AWSSDK.Core": {
               "target": "Package",
-              "version": "[3.7.302.19, )"
+              "version": "[3.7.303, )"
             },
             "AWSSDK.DynamoDBv2": {
               "target": "Package",
               "version": "[3.7.301.22, )"
+            },
+            "AWSSDK.S3": {
+              "target": "Package",
+              "version": "[3.7.307.1, )"
+            },
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[8.0.3, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",

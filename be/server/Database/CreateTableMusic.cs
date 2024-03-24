@@ -4,6 +4,9 @@ using server.Interface;
 
 namespace server.Database
 {
+    //Write a program to automatically create a table titled “music” 
+    //in DynamoDB with the following Attributes (some attributes might not be used to 
+    //implement any functionalities in the subsequent sections): title, artist, year, web_url, image_url.
     public class CreateTableMusic : IDynamoDBMigration
     {
         private readonly AmazonDynamoDBClient _client;

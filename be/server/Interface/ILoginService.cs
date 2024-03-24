@@ -10,5 +10,6 @@ namespace server.Interface
     {
         Task InsertLoginAsync(Login login);
         Task InsertLoginTableData();
+        Task<string> ValidateLogin(string email, string password);
     }
 }

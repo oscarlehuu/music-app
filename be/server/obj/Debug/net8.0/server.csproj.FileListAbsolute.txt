@@ -104,3 +104,13 @@
 /Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.resources.dll
 /Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/AWSSDK.DynamoDBv2.dll
 /Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/Newtonsoft.Json.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/AWSSDK.S3.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/obj/Debug/net8.0/server.sourcelink.json
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/Microsoft.IdentityModel.Abstractions.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/Microsoft.IdentityModel.Logging.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/Microsoft.IdentityModel.Tokens.dll
+/Users/oscar/Desktop/RMIT/Cloud Computing/Assignment 1/MusicApp/be/server/bin/Debug/net8.0/System.IdentityModel.Tokens.Jwt.dll

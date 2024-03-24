@@ -6,8 +6,12 @@
 // // using server.Interface;
 // // using server.Models;
 
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
+using Microsoft.IdentityModel.Tokens;
 using server.Database;
 using server.Interface;
 using server.Models;
@@ -17,11 +21,12 @@ namespace server.Service
     public class LoginService : ILoginService
     {
         private readonly AmazonDynamoDBClient _client;
-        private readonly CreateTableLogin _createTableLogin;
-        public LoginService(AmazonDynamoDBClient client, CreateTableLogin createTableLogin)
+        private readonly string _tableLoginName = "login";
+        private readonly IConfiguration _iConfiguration;
+        public LoginService(AmazonDynamoDBClient client, IConfiguration iConfiguration)
         {
             _client = client;
-            _createTableLogin = createTableLogin;
+            _iConfiguration = iConfiguration;
         } 
         private async Task<bool> TableHasDataAsync(string tableName)
         {
@@ -34,7 +39,7 @@ namespace server.Service
         {
             var request = new PutItemRequest
             {
-                TableName = "login",
+                TableName = _tableLoginName,
                 Item = new Dictionary<string, AttributeValue>
                 {
                     {"id", new AttributeValue { S = login.Id }},
@@ -50,7 +55,7 @@ namespace server.Service
         // Note: This task can be done via code or console.
         public async Task InsertLoginTableData() 
         {
-            bool hasData = await TableHasDataAsync("login");
+            bool hasData = await TableHasDataAsync(_tableLoginName);
             if (hasData)
             {
               Console.WriteLine("Table 'login' already populated. Skipping.");
@@ -74,6 +79,57 @@ namespace server.Service
                 await InsertLoginAsync(newLogin);  
                 password = password.Substring(1) + ((password[5] - '0' + 1) % 10);
             }
+        }
+        private async Task<string> GetLoginIdByEmail(string email)
+        {
+            var queryRequest = new QueryRequest
+            {
+                TableName = _tableLoginName,
+                IndexName = "email-index",
+                KeyConditionExpression = "email = :v_email",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    { ":v_email", new AttributeValue { S = email } }
+                }
+            };
+            var response = await _client.QueryAsync(queryRequest);
+            if (response.Items.Count == 0) return null;
+            return response.Items[0]["id"].S;
+        }
+        public async Task<string> ValidateLogin(string email, string password) 
+        {
+            string userId = await GetLoginIdByEmail(email);
+            if (userId == null) return null; // Email not found in DynamoDB
+            var request = new GetItemRequest 
+            {
+                TableName = _tableLoginName,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    { "id", new AttributeValue { S = userId } },
+                }
+            };
+
+            var response = await _client.GetItemAsync(request);
+            if (response.Item.Count == 0) return null;
+
+            if (response.Item["password"].S != password) return null; // Password wrong
+
+            var claims = new[] 
+            { 
+                new Claim(ClaimTypes.Email, email)
+            };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_iConfiguration["JWT:Key"]));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken
+            (
+                issuer: _iConfiguration["JWT:Issuer"],
+                audience: _iConfiguration["JWT:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

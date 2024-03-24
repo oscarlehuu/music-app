@@ -3,6 +3,14 @@ using server.Interface;
 using server.Database;
 using Amazon;
 using server.Service;
+using Amazon.S3;
+using Amazon.Util;
+using server.Service.Utils;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using server.Controllers;
+using Amazon.DynamoDBv2.Model;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +26,8 @@ var awsSecretKey = builder.Configuration.GetValue("AWS:SecretKey", "");
 var awsSessionToken = builder.Configuration.GetValue("AWS:SessionToken", "");
 var awsRegion = builder.Configuration.GetValue("AWS:Region", "");
 
+var jwtKey = builder.Configuration.GetValue("JWT:Key", "");
+
 builder.Services.AddSingleton<AmazonDynamoDBClient>(new AmazonDynamoDBClient( 
     awsAccessKeyId: awsAccessKey,  
     awsSecretAccessKey: awsSecretKey,
@@ -25,16 +35,40 @@ builder.Services.AddSingleton<AmazonDynamoDBClient>(new AmazonDynamoDBClient(
     region: RegionEndpoint.USEast1
 ));
 
+builder.Services.AddSingleton<AmazonS3Client>(new AmazonS3Client(
+    awsAccessKeyId: awsAccessKey,
+    awsSecretAccessKey: awsSecretKey,
+    awsSessionToken: awsSessionToken,
+    region: RegionEndpoint.USEast1
+));
+
+// ----- Implementing JWT Token ------ //
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
+    options => 
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), 
+            ValidateIssuer = false, // Adjust based on your needs
+            ValidateAudience = false
+        };
+    }
+);
 
 //builder.Services.AddSingleton<AmazonDynamoDBClient>(); 
 builder.Services.AddSingleton<DynamoDBUtils>();
 // ------ Database Table ------ //
 builder.Services.AddSingleton<CreateTableLogin>();
 builder.Services.AddSingleton<CreateTableMusic>();
+builder.Services.AddSingleton<UpdateGSITableLogin>();
 // ------- --------- ---------/
 builder.Services.AddSingleton<ITestDynamoDBConnection, TestDynamoDBConnection>();
+builder.Services.AddSingleton<S3BucketService>();
 // -------- Service -------- //
 builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<LoginService>();
+builder.Services.AddScoped<LoginController>();
 builder.Services.AddSingleton<MusicService>();
 // -------- -------- -------- //
 // ... rest of your app setup ...
@@ -44,6 +78,10 @@ var app = builder.Build();
 // Test connection with database
 var testService = app.Services.GetRequiredService<ITestDynamoDBConnection>();
 await testService.TestConnection();
+
+// Test connection with S3 Bucket
+var s3TestService = app.Services.GetRequiredService<S3BucketService>();
+await s3TestService.ListBuckets();
 
 //var migrations = app.Services.GetRequiredService<IEnumerable<IDynamoDBMigration>>();
 var tableLoginMigration = app.Services.GetServices<CreateTableLogin>();
@@ -75,9 +113,19 @@ foreach (var migration in tableMusicMigration)
 
     }
 }
-// ------ ReadAndSaveMusicJsonFile ------ //
+var updateGSITableLogin = app.Services.GetRequiredService<UpdateGSITableLogin>();
+if (!await updateGSITableLogin.EmailIndexExists("email-index"))
+{
+    Console.WriteLine("Creating email-index...");
+    await updateGSITableLogin.UpdateGSI();
+} else {
+    Console.WriteLine("email-index already exists. Skipping update.");
+}
 var musicService = app.Services.GetRequiredService<MusicService>(); 
+// ------ ReadAndSaveMusicJsonFile ------ //
 await musicService.ReadAndSaveMusicJsonFile();
+// ------ Download and Upload Images to S3 from a1.json ----- //
+await musicService.DownloadAndUploadImages();
 // ------ -------- -------- ------ //
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
