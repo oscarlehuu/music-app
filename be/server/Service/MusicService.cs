@@ -19,13 +19,6 @@ namespace server.Service
             _dynamoDBClient = dynamoDBClient;
             _s3Client = s3client;
         }
-        // public T ReadJsonFile<T>(string filePath)
-        // {
-        //     // using FileStream fileStream = File.OpenRead(filePath);
-        //     // return JsonSerializer.Deserialize<T>(fileStream);
-        //     using StreamReader reader = new(filePath);
-        //     return JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
-        // }
         private async Task<bool> IsDataAlreadyWritten() 
         {
             string flagFilePath = "../../dataWrittenFlag.txt";

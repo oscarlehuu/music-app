@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using server.DTO;
 using server.Service;
 
 namespace server.Controllers
@@ -30,6 +31,21 @@ namespace server.Controllers
             } else 
             {
                 return BadRequest(new { success = false, message = "Invalid email or password" });
+            }
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterLogin(DTO.RegisterRequest request)
+        {
+            var registerResult = await _loginService.RegisterUserAsync(request);
+
+            if (registerResult.Success)
+            {
+                return Ok(registerResult.Message);
+            }
+            else
+            {
+                return BadRequest(registerResult.Message);
             }
         }
     }
