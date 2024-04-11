@@ -13,6 +13,7 @@ namespace server.Service
     {
         private readonly AmazonDynamoDBClient _dynamoDBClient;
         private readonly AmazonS3Client _s3Client;
+        private readonly string _musicTableName = "music";
 
         public MusicService(AmazonDynamoDBClient dynamoDBClient, AmazonS3Client s3client)
         {
@@ -53,7 +54,7 @@ namespace server.Service
                                 {"id", new AttributeValue { S = Guid.NewGuid().ToString() }},
                                 {"title", new AttributeValue { S = song.title }},
                                 {"artist", new AttributeValue { S = song.artist }},
-                                { "year", new AttributeValue { S = song.year } },
+                                {"year", new AttributeValue { S = song.year } },
                                 {"web_url", new AttributeValue { S = song.webUrl }},
                                 {"img_url", new AttributeValue { S = song.imgUrl }},
                             }
@@ -108,6 +109,24 @@ namespace server.Service
                     }
                 }
             }
+        }
+
+        public async Task<MusicModel> GetMusicDetailsByIdAsync(string musicId)
+        {
+            var request = new GetItemRequest 
+            {
+                TableName = _musicTableName,
+                Key = new Dictionary<string, AttributeValue> { { "id", new AttributeValue { S = musicId } } }
+            };
+            var response = await _dynamoDBClient.GetItemAsync(request);    
+            var musicJson = "{";
+            foreach(var attribute in response.Item) 
+            {
+                musicJson += $"\"{attribute.Key}\":\"{attribute.Value.S}\","; 
+            }
+            musicJson = musicJson.TrimEnd(',') + "}"; // Remove trailing comma, close object
+            var musicModel = JsonConvert.DeserializeObject<MusicModel>(musicJson);
+            return musicModel;
         }
     }
 }

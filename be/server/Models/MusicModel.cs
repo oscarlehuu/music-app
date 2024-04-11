@@ -11,9 +11,11 @@ namespace server.Models
         public string title { get; set; }
         [DynamoDBProperty("artist")]
         public string artist { get; set; }
+        [DynamoDBProperty("year")]
+        public string year { get; set; }
         [DynamoDBProperty("web_url")]
-        public string webUrl { get; set; }
+        public string web_url { get; set; }
         [DynamoDBProperty("img_url")]
-        public string imgUrl { get; set; }
+        public string img_url { get; set; }
     }
 }

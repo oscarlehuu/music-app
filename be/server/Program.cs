@@ -12,9 +12,7 @@ using System.Text;
 using server.Controllers;
 using Amazon.DynamoDBv2.Model;
 
-
 var builder = WebApplication.CreateBuilder(args);
-
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -61,6 +59,7 @@ builder.Services.AddSingleton<DynamoDBUtils>();
 // ------ Database Table ------ //
 builder.Services.AddSingleton<CreateTableLogin>();
 builder.Services.AddSingleton<CreateTableMusic>();
+builder.Services.AddSingleton<CreateTableSubscription>();
 builder.Services.AddSingleton<UpdateGSITableLogin>();
 // ------- --------- ---------/
 builder.Services.AddSingleton<ITestDynamoDBConnection, TestDynamoDBConnection>();
@@ -70,11 +69,23 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<LoginController>();
 builder.Services.AddSingleton<MusicService>();
+builder.Services.AddScoped<SubscriptionService>();
+builder.Services.AddScoped<SubscriptionController>();
 // -------- -------- -------- //
 // ... rest of your app setup ...
 
 
 var app = builder.Build();
+// app.Use(async (context, next) =>
+// {
+//     Console.WriteLine($"Request: {context.Request.Method} {context.Request.Path} -  Has Route Values: {context.Request.RouteValues.Any()} - Values: {string.Join(", ", context.Request.RouteValues.Select(r => $"{r.Key}: {r.Value}"))}"); 
+
+//     // Add this: Log the raw route template  and action name
+//     var routeData = context.GetRouteData();
+//     Console.WriteLine($"Matched Action Name: {routeData?.Values["action"]}");
+
+//     await next();
+// });
 // Test connection with database
 var testService = app.Services.GetRequiredService<ITestDynamoDBConnection>();
 await testService.TestConnection();
@@ -101,7 +112,6 @@ using (var scope = serviceScopeFactory.CreateScope())
     var loginService = scope.ServiceProvider.GetRequiredService<ILoginService>(); 
     await loginService.InsertLoginTableData();
 }
-
 // Create Table Music
 var tableMusicMigration = app.Services.GetServices<CreateTableMusic>();
 foreach (var migration in tableMusicMigration)
@@ -126,6 +136,18 @@ var musicService = app.Services.GetRequiredService<MusicService>();
 await musicService.ReadAndSaveMusicJsonFile();
 // ------ Download and Upload Images to S3 from a1.json ----- //
 await musicService.DownloadAndUploadImages();
+
+// Create table Subscription
+var tableSubscriptionMigration = app.Services.GetServices<CreateTableSubscription>();
+foreach (var migration in tableSubscriptionMigration)
+{
+    Console.WriteLine($"Processing migration: {migration.GetType().Name}");
+    if (await migration.ShouldExecuteAsync())
+    {
+        await migration.ExecuteAsync();
+
+    }
+}
 // ------ -------- -------- ------ //
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -137,6 +159,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+app.UseAuthentication();
 
 app.MapControllers();
 

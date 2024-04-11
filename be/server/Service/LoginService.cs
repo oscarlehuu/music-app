@@ -75,7 +75,7 @@ namespace server.Service
                 password = password.Substring(1) + ((password[5] - '0' + 1) % 10);
             }
         }
-        private async Task<string> GetUserIdByEmail(string email)
+        public async Task<string> GetUserIdByEmail(string email)
         {
             var queryRequest = new QueryRequest
             {
@@ -172,5 +172,6 @@ namespace server.Service
 
             return new RegisterResponse { Success = true, Message = "User registered successfully" };    
         }
+
     }
 }
