@@ -19,12 +19,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowSpecificOrigin", 
+                        builder => builder.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod()
+                      );
+});
+
 var awsAccessKey = builder.Configuration.GetValue( "AWS:AcessKey", "");
 var awsSecretKey = builder.Configuration.GetValue("AWS:SecretKey", "");
 var awsSessionToken = builder.Configuration.GetValue("AWS:SessionToken", "");
 var awsRegion = builder.Configuration.GetValue("AWS:Region", "");
 
 var jwtKey = builder.Configuration.GetValue("JWT:Key", "");
+var jwtIssuer = builder.Configuration.GetValue("JWT:Issuer", "");
+var jwtAudience = builder.Configuration.GetValue("JWT:Audience", "");
 
 builder.Services.AddSingleton<AmazonDynamoDBClient>(new AmazonDynamoDBClient( 
     awsAccessKeyId: awsAccessKey,  
@@ -48,8 +56,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), 
-            ValidateIssuer = false, // Adjust based on your needs
-            ValidateAudience = false
+            ValidIssuer = jwtIssuer,
+            ValidateIssuer = true,
+            ValidAudience = jwtAudience,
+            ValidateAudience = true,
+            ValidateLifetime = true
         };
     }
 );
@@ -155,6 +166,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowSpecificOrigin");
 
 app.UseHttpsRedirection();
 
